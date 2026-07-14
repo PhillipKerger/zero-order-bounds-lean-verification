@@ -1,0 +1,6 @@
+/.lake
+
+# Private project materials not intended for the public repository.
+/LEAN_FORMALIZATION_INSTRUCTIONS.md
+/LEAN_FORMALIZATION_INSTRUCTIONS.md:Zone.Identifier
+/zero_order_LB_tex/
