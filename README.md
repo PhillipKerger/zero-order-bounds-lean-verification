@@ -1,4 +1,4 @@
-# Lean companion to *Closing the Oracle-Complexity Gap in Derivative-Free Optimization*
+# Lean companion to *Closing the Oracle-Complexity Gap in Derivative-Free Convex Optimization*
 
 This repository accompanies the manuscript
 [*Closing the Oracle-Complexity Gap in Derivative-Free Convex Optimization: A Near-Quadratic Lower Bound from Exact Function Values*](zero_order_lower_bounds_manuscript.pdf).
