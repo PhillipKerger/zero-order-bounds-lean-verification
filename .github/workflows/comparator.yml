@@ -1,0 +1,131 @@
+name: Comparator
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: comparator-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify fixed-horizon theorem
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      # actions/checkout v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      # Do not build Challenge or Solution before Comparator runs.
+      # leanprover/lean-action v1.5.0 only installs the pinned toolchain.
+      - name: Set up Lean
+        uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-github-cache: false
+          use-mathlib-cache: false
+
+      - name: Prepare trusted Mathlib cache
+        run: lake exe cache get
+
+      # actions/setup-go v5.5.0
+      - name: Set up Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version: "1.24.0"
+
+      - name: Build pinned verification tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          comparator_sha=07bc4ea40f2266dcb861820a2ec1fa3244ed307f
+          lean4export_sha=4e7915201d3f9f04470d9eae002fa695f7cdc589
+          landrun_sha=5ed4a3db3a4ad930d577215c6b9abaa19df7f99f
+
+          git clone --filter=blob:none https://github.com/leanprover/comparator.git \
+            "$RUNNER_TEMP/comparator"
+          git -C "$RUNNER_TEMP/comparator" checkout --detach "$comparator_sha"
+          test "$(git -C "$RUNNER_TEMP/comparator" rev-parse HEAD)" = "$comparator_sha"
+
+          (
+            cd "$RUNNER_TEMP/comparator"
+            lake build lean4export comparator
+          )
+          test "$(git -C "$RUNNER_TEMP/comparator/.lake/packages/lean4export" rev-parse HEAD)" = \
+            "$lean4export_sha"
+
+          go install "github.com/zouuup/landrun/cmd/landrun@$landrun_sha"
+
+      - name: Verify sandbox and fixed-horizon theorem
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(id -u)" -ne 0
+
+          kernel_version="$(uname -r | cut -d- -f1)"
+          if ! dpkg --compare-versions "$kernel_version" ge 6.7; then
+            echo "::error::Landrun network isolation requires Linux 6.7 or newer; found $kernel_version."
+            exit 1
+          fi
+
+          landrun_bin="$(go env GOPATH)/bin/landrun"
+          comparator_bin="$RUNNER_TEMP/comparator/.lake/build/bin/comparator"
+          lean4export_bin="$RUNNER_TEMP/comparator/.lake/packages/lean4export/.lake/build/bin/lean4export"
+          lake_bin="$(command -v lake)"
+          test -x "$landrun_bin"
+          test -x "$comparator_bin"
+          test -x "$lean4export_bin"
+          test -x "$lake_bin"
+
+          # Comparator requests Landrun's best-effort mode. Verify that
+          # filesystem isolation has not silently degraded on this runner.
+          landrun_policy=(
+            --best-effort --ro / --rw /dev
+            --rwx "$GITHUB_WORKSPACE/.lake"
+            --ldd --add-exec
+          )
+          allowed_probe="$GITHUB_WORKSPACE/.lake/landrun-must-create"
+          "$landrun_bin" "${landrun_policy[@]}" /usr/bin/touch "$allowed_probe"
+          if [[ ! -f "$allowed_probe" ]]; then
+            echo '::error::Landrun positive-control write did not create its target.'
+            exit 1
+          fi
+          rm -f "$allowed_probe"
+
+          denied_probe="$RUNNER_TEMP/landrun-must-not-create"
+          if "$landrun_bin" "${landrun_policy[@]}" /usr/bin/touch "$denied_probe"; then
+            echo '::error::Landrun allowed a write outside the explicitly writable tree.'
+            exit 1
+          fi
+          if [[ -e "$denied_probe" ]]; then
+            echo '::error::Landrun write probe unexpectedly created its target.'
+            exit 1
+          fi
+
+          # Comparator currently requires this outer network guard in addition
+          # to Landrun. The transient unit runs as the unprivileged runner user.
+          sudo systemd-run --quiet --wait --pipe --collect \
+            --uid="$(id -u)" --gid="$(id -g)" \
+            --property="RestrictAddressFamilies=~AF_UNIX" \
+            --property="IPAddressDeny=any" \
+            --property="NoNewPrivileges=yes" \
+            --working-directory="$GITHUB_WORKSPACE" \
+            --setenv="HOME=$HOME" \
+            --setenv="PATH=$PATH" \
+            --setenv="COMPARATOR_LANDRUN=$landrun_bin" \
+            --setenv="COMPARATOR_LEAN4EXPORT=$lean4export_bin" \
+            "$lake_bin" env "$comparator_bin" \
+            comparator/fixed_horizon_lower_bound.json

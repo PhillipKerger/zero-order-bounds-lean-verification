@@ -16,3 +16,9 @@ rev = "v4.32.0"
 
 [[lean_lib]]
 name = "ZeroOrderBounds"
+
+[[lean_lib]]
+name = "Challenge"
+
+[[lean_lib]]
+name = "Solution"

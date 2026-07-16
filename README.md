@@ -73,6 +73,17 @@ Formal verification of the sharper $d^{-1/2}$ result is planned as future work, 
 - [`ZeroOrderBounds.lean`](ZeroOrderBounds.lean) is the library root. A normal
   `lake build` reaches the complete proof chain and the repeated-query sanity
   theorem.
+- [`Challenge.lean`](Challenge.lean) is the reviewed statement-only Comparator
+  fixture, while [`Solution.lean`](Solution.lean) repeats that statement and
+  delegates to the public theorem. The challenge imports the
+  final-proof-independent public vocabulary boundary in
+  [`ZeroOrderBounds/Statement.lean`](ZeroOrderBounds/Statement.lean).
+- [`formalization.yaml`](formalization.yaml) records source provenance, exact
+  scope, axioms, statement alignment, and the divergence from the manuscript's
+  stronger headline theorem.
+- [`comparator/fixed_horizon_lower_bound.json`](comparator/fixed_horizon_lower_bound.json)
+  configures statement and axiom verification; [`VERIFICATION.md`](VERIFICATION.md)
+  documents the local checks and sandboxed CI gate.
 - [`LEAN_PROOF_MAP.md`](LEAN_PROOF_MAP.md) gives the reviewer-facing proof map,
   module-by-module theorem cross-references, model audit, scope boundaries,
   and verification record.
@@ -107,6 +118,21 @@ For a targeted strict check:
 lake env lean --trust=0 ZeroOrderBounds/Main.lean
 ```
 
+For the exact axiom audit and Comparator wrappers:
+
+```bash
+lake build Challenge Solution
+lake env lean --trust=0 ZeroOrderBounds/Audit.lean
+```
+
+The `Comparator` GitHub Actions workflow independently compares the trusted
+challenge statement with the solution wrapper, enforces the axiom allowlist,
+and replays the solution through Lean's kernel in a pinned sandboxed
+environment. The compared proposition explicitly includes normalization,
+convexity, and global one-Lipschitzness of the returned objective. See
+[`VERIFICATION.md`](VERIFICATION.md) for its trust boundary and the
+production-source scan.
+
 ## Verification status and trusted base
 
 Verified on 2026-07-14 with Lean `v4.32.0` and mathlib `v4.32.0`; exact
@@ -123,6 +149,11 @@ The final `#print axioms` checks in `ZeroOrderBounds/Main.lean` report only:
 
 These are standard Lean/classical dependencies. See the
 [Lean proof map](LEAN_PROOF_MAP.md) for the complete audit.
+
+The statement comparison does not broaden the formalized claim: the current
+Lean endpoint remains the even-dimensional, fixed-horizon `d^-3` result. It
+does not certify the manuscript's stronger `d^-1/2` theorem; this distinction
+is machine-readable in [`formalization.yaml`](formalization.yaml).
 
 ## References
 

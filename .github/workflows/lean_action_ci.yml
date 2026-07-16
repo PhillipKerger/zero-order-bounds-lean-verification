@@ -17,5 +17,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+      - name: Reject proof shortcuts in production sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          grep -R -n -E --include='*.lean' \
+            '\b(sorry|admit|native_decide)\b|^[[:space:]]*(axiom|opaque|unsafe|extern|partial)\b|^[[:space:]]*@\[implemented_by' \
+            ZeroOrderBounds.lean ZeroOrderBounds Solution.lean
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo '::error::Production Lean sources contain a forbidden declaration or proof shortcut.'
+            exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            exit "$status"
+          fi
       - uses: leanprover/lean-action@v1
+      - name: Verify exact axiom audit
+        run: lake env lean ZeroOrderBounds/Audit.lean
       - uses: leanprover-community/docgen-action@v1

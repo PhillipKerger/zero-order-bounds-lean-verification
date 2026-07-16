@@ -1,0 +1,139 @@
+# Schema: https://github.com/mathlib-initiative/formalization.yaml
+version: "v0.3"
+
+project:
+  name: "Deterministic exact-value zero-order lower bound in Lean"
+  authors:
+    - "Phillip Kerger"
+  license: "all-rights-reserved"
+
+sources:
+  - title: "Closing the Oracle-Complexity Gap in Derivative-Free Optimization: A Near-Quadratic Lower Bound from Exact Function Values"
+    authors:
+      - "Phillip Kerger"
+    id: "https://github.com/PhillipKerger/zero-order-bounds/blob/3bf29af9f29740205998060dab32382049736150/zero_order_lower_bounds_manuscript.pdf"
+    type: "manuscript"
+    license: "all-rights-reserved"
+    author_contacted: "n/a"
+    sha256: "3abc9557f91f3c1ecdd2c9701fa4f4cbaa0d133e8a878268d526edd711e9e75e"
+    note: >-
+      The source author is also the formalization project author. The bundled
+      manuscript is the revision identified by the URL and checksum above.
+
+status:
+  scope: >-
+    Lean 4 and Mathlib formalization of an even-dimensional fixed-horizon
+    lower bound for deterministic exact-value convex optimization. For m at
+    least 1000 and 1000*T at most m^2, the public theorem defeats every
+    deterministic strategy on an admissible convex one-Lipschitz max-linear
+    objective with strict error greater than
+    1/(200000000*m^3). The proof formalizes the hard family, projection
+    geometry, exact resisting oracle, intrinsic-volume potential, one-row
+    sensitivity argument, and final indistinguishability step. The manuscript's
+    stronger d^-1/2 accuracy theorem, odd-dimensional embedding,
+    variable-stopping-time wrapper, full-class wrapper, upper bound, and
+    mixed-integer corollary are not separate Lean endpoints. Sorry counts
+    exclude the statement-only Comparator challenge fixture.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms:
+    - "propext"
+    - "Classical.choice"
+    - "Quot.sound"
+  main_results:
+    - declaration: "ZeroOrderBounds.fixedHorizonLowerBound_strict"
+      file: "ZeroOrderBounds/Main.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Classical.choice"
+        - "Quot.sound"
+      comparator_config: "comparator/fixed_horizon_lower_bound.json"
+      literature_dependencies: []
+
+automation:
+  methods:
+    - method: "other"
+      models: []
+      framework: "not recorded"
+      tool_setup: >-
+        The repository does not contain a complete session transcript or tool
+        inventory establishing how the Lean source was produced.
+      cost:
+        wall_time: "not recorded"
+        spend_usd: "not recorded"
+        hardware: "not recorded"
+      prompting_notes: "not recorded"
+  spend_usd: "not recorded"
+  notes: >-
+    The bundled manuscript reports extensive use of GPT 5.6 Sol Pro in the
+    mathematical development. That statement does not by itself establish
+    which tools produced each part of the Lean code.
+
+fidelity:
+  divergences: >-
+    The Lean endpoint does not formalize the manuscript's headline theorem.
+    The manuscript proves an Omega(d^2/log(d+1)) lower bound at accuracy of
+    order d^-1/2 in all sufficiently large dimensions, using aggregate width
+    across many rows. The Lean proof instead uses one surviving row and proves
+    a stronger quadratic horizon bound at the substantially smaller accuracy
+    1/(25000000*d^3), only for even d=2m with d at least 2000. A lower bound at
+    d^-3 accuracy does not imply the manuscript's d^-1/2 lower bound.
+
+    The public Lean theorem is fixed-horizon and uses exactly T transcript
+    entries. Padding a strategy that stops within T rounds, embedding odd
+    dimensions, and lifting the admissible hard family to the full convex
+    one-Lipschitz class are mathematical corollaries described in the
+    documentation but are not packaged as public Lean declarations. The
+    manuscript's Protasov upper bound, aggregate-width argument, and
+    mixed-integer transfer are not formalized.
+
+review:
+  status: "self-assessed; agent-audited"
+  reviewers:
+    - "Phillip Kerger"
+    - "GitHub Copilot (statement and metadata audit, 2026-07-16)"
+  notes: >-
+    Repository verification records a successful kernel build, an empty
+    production-source scan for proof shortcuts, and final-theorem dependencies
+    only on propext, Classical.choice, and Quot.sound. The Comparator fixture
+    checks that the reviewed challenge statement is exactly the statement
+    proved by the solution wrapper. These checks are not independent external
+    mathematical peer review.
+
+alignment:
+  namespace: "ZeroOrderBounds"
+  statements:
+    - source: "Manuscript Theorem 1 (Deterministic lower bound)"
+      status: "not-formalized"
+      note: >-
+        The d^-1/2 accuracy and Omega(d^2/log(d+1)) statement is outside the
+        current Lean scope.
+
+    - source: "Repository fixed-horizon d^-3 lower-bound specification"
+      lean: "ZeroOrderBounds.fixedHorizonLowerBound_strict"
+      module: "ZeroOrderBounds.Main"
+      status: "proved"
+      note: >-
+        Production endpoint for the strict explicit objective gap. The
+        Comparator wrapper additionally includes the already-proved
+        normalization, convexity, and global one-Lipschitz certificates for
+        the returned hard objective.
+
+    - source: "Hard max-linear family: convexity, normalization, and Lipschitzness"
+      lean: "ZeroOrderBounds.convexOn_hardObjective; ZeroOrderBounds.hardObjective_zero; ZeroOrderBounds.hardObjective_lipschitzWith_one"
+      module: "ZeroOrderBounds.HardFamily"
+      status: "proved-as-components"
+
+    - source: "Exact resisting-oracle and normalized-volume backbone"
+      lean: "ZeroOrderBounds.oracleRun_final_budgets"
+      module: "ZeroOrderBounds.OracleRun"
+      status: "proved-as-components"
+
+    - source: "Manuscript Corollary 1 (Mixed-integer consequence)"
+      status: "not-formalized"
+      note: "The mixed-integer transfer theorem and its application are outside the Lean scope."
+
+acknowledgements: >-
+  Built on Lean 4 and Mathlib. Comparator configuration follows the
+  leanprover/comparator challenge/solution verification pattern.
