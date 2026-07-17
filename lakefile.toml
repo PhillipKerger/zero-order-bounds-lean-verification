@@ -1,7 +1,7 @@
 name = "zero_order_bounds"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["ZeroOrderBounds"]
+defaultTargets = ["ZeroOrderBounds", "FullDMinusOneHalfAccuracy"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -18,7 +18,10 @@ rev = "v4.32.0"
 name = "ZeroOrderBounds"
 
 [[lean_lib]]
-name = "Challenge"
+name = "Challenge-d-3-accuracy"
 
 [[lean_lib]]
 name = "Solution"
+
+[[lean_lib]]
+name = "FullDMinusOneHalfAccuracy"

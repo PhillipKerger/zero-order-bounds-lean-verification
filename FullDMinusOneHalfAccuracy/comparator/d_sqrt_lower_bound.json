@@ -1,0 +1,7 @@
+{
+  "challenge_module": "FullDMinusOneHalfAccuracy.«Challenge-full-d-1-2-accuracy»",
+  "solution_module": "FullDMinusOneHalfAccuracy.Solution",
+  "theorem_names": ["fixedHorizonSqrtLowerBound_strict"],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": false
+}

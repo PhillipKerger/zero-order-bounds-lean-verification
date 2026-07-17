@@ -3,8 +3,8 @@ import ZeroOrderBounds
 /-!
 # Comparator solution wrapper for the fixed-horizon lower bound
 
-This repeats the trusted challenge statement and delegates its proof to the
-formalization's public endpoint.
+This repeats the trusted statement in `Challenge-d-3-accuracy.lean` and
+delegates its proof to the formalization's public endpoint.
 -/
 
 open Metric

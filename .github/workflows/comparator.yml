@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Verify fixed-horizon theorem
+    name: Verify fixed-horizon theorems
     runs-on: ubuntu-24.04
     timeout-minutes: 60
 
@@ -26,7 +26,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # Do not build Challenge or Solution before Comparator runs.
+      # Do not build either challenge or solution before Comparator runs.
       # leanprover/lean-action v1.5.0 only installs the pinned toolchain.
       - name: Set up Lean
         uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9
@@ -69,7 +69,7 @@ jobs:
 
           go install "github.com/zouuup/landrun/cmd/landrun@$landrun_sha"
 
-      - name: Verify sandbox and fixed-horizon theorem
+      - name: Verify sandbox and fixed-horizon theorems
         shell: bash
         run: |
           set -euo pipefail
@@ -129,3 +129,16 @@ jobs:
             --setenv="COMPARATOR_LEAN4EXPORT=$lean4export_bin" \
             "$lake_bin" env "$comparator_bin" \
             comparator/fixed_horizon_lower_bound.json
+
+          sudo systemd-run --quiet --wait --pipe --collect \
+            --uid="$(id -u)" --gid="$(id -g)" \
+            --property="RestrictAddressFamilies=~AF_UNIX" \
+            --property="IPAddressDeny=any" \
+            --property="NoNewPrivileges=yes" \
+            --working-directory="$GITHUB_WORKSPACE" \
+            --setenv="HOME=$HOME" \
+            --setenv="PATH=$PATH" \
+            --setenv="COMPARATOR_LANDRUN=$landrun_bin" \
+            --setenv="COMPARATOR_LEAN4EXPORT=$lean4export_bin" \
+            "$lake_bin" env "$comparator_bin" \
+            FullDMinusOneHalfAccuracy/comparator/d_sqrt_lower_bound.json

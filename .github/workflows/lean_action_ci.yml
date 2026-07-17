@@ -23,8 +23,11 @@ jobs:
           set -euo pipefail
           set +e
           grep -R -n -E --include='*.lean' \
+            --exclude='Challenge-d-3-accuracy.lean' \
+            --exclude='Challenge-full-d-1-2-accuracy.lean' \
             '\b(sorry|admit|native_decide)\b|^[[:space:]]*(axiom|opaque|unsafe|extern|partial)\b|^[[:space:]]*@\[implemented_by' \
-            ZeroOrderBounds.lean ZeroOrderBounds Solution.lean
+            ZeroOrderBounds.lean ZeroOrderBounds Solution.lean \
+            FullDMinusOneHalfAccuracy.lean FullDMinusOneHalfAccuracy
           status=$?
           set -e
           if [ "$status" -eq 0 ]; then
@@ -36,5 +39,7 @@ jobs:
           fi
       - uses: leanprover/lean-action@v1
       - name: Verify exact axiom audit
-        run: lake env lean ZeroOrderBounds/Audit.lean
+        run: |
+          lake env lean --trust=0 ZeroOrderBounds/Audit.lean
+          lake env lean --trust=0 FullDMinusOneHalfAccuracy/Audit.lean
       - uses: leanprover-community/docgen-action@v1

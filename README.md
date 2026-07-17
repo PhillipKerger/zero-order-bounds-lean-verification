@@ -2,158 +2,193 @@
 
 This repository accompanies the manuscript
 [*Closing the Oracle-Complexity Gap in Derivative-Free Convex Optimization: A Near-Quadratic Lower Bound from Exact Function Values*](zero_order_lower_bounds_manuscript.pdf).
-It contains the manuscript sources and a Lean 4/mathlib formalization of a
-deterministic exact-value oracle lower bound for convex optimization.
+It contains Lean 4/mathlib proofs of deterministic exact-value oracle lower
+bounds for convex optimization.
 
-The results have different accuracy guarantees:
+Two endpoints are preserved and independently auditable:
 
-- **Manuscript:** $\Omega(d^2/\log d)$ queries at
-  $\Theta(d^{-1/2})$ accuracy.
-- **Lean:** $\Omega(d^2)$ queries at explicit $\Theta(d^{-3})$ accuracy, for
-  even dimensions.
+- the top-level [`ZeroOrderBounds/`](ZeroOrderBounds/) development contains
+  the original, simpler even-dimensional `d⁻³`-accuracy theorem; and
+- [`FullDMinusOneHalfAccuracy/`](FullDMinusOneHalfAccuracy/) fully verifies
+  the paper's sharper deterministic `d⁻¹ᐟ²`-accuracy lower bound, including
+  its spherical-averaging, Brunn--Minkowski, and intrinsic Urysohn machinery.
 
-## Formally verified theorem
+Here “fully verifies” refers to the paper's deterministic lower-bound result;
+the separate upper-bound and transfer results listed under
+[Scope boundary](#scope-boundary) remain outside the formalization.
 
-Write $d=2m$. For every $m\ge1000$, horizon $T$ satisfying
+## Full `d⁻¹ᐟ²`-accuracy theorem
 
-$$
-1000T\le m^2,
-$$
-
-and every deterministic exact-value strategy run for exactly $T$ rounds, Lean
-constructs a consistent transcript and an admissible convex, globally
-one-Lipschitz max-linear objective with $f(0)=0$. It also certifies a minimizer
-over the Euclidean unit ball and proves that the strategy's error is greater
-than
+Write `d = 2m`, and let
 
 $$
-\frac{1}{200{,}000{,}000\,m^3}.
+\varepsilon_m=\frac{10^{-7}}{\sqrt{2m}}.
 $$
 
-Equivalently, for even $d\ge2000$, every horizon with $4000T\le d^2$ can be
-defeated at accuracy
+For every positive `m`, every exact horizon `T` satisfying
 
 $$
-\frac{1}{25{,}000{,}000\,d^3}.
+T \le \frac{m^2}{100\log(e m)},
 $$
 
-Strategies may depend arbitrarily on the complete exact-real transcript; no
-continuity, finite-precision, linear-span, time, or memory restriction is
-assumed.
+and every deterministic exact-value strategy, Lean constructs a length-`T`
+transcript and an admissible max-affine objective for which the strategy's
+strict objective error exceeds `ε_m`.  The conclusion explicitly certifies:
 
-The public statements in [`ZeroOrderBounds/Main.lean`](ZeroOrderBounds/Main.lean)
-are:
+- normalization at zero;
+- convexity and global one-Lipschitzness;
+- consistency with every exact oracle answer;
+- a minimizer in the Euclidean unit ball; and
+- the strict `10⁻⁷ / √d` gap.
 
-- `ZeroOrderBounds.fixedHorizonLowerBound_strict`;
-- `ZeroOrderBounds.fixedHorizonLowerBound`; and
-- `ZeroOrderBounds.not_succeedsWithin_advertised`.
+The production declaration is
+`ZeroOrderBounds.AccuracyImprovement.fixedHorizonSqrtLowerBound_strict` in
+[`FullDMinusOneHalfAccuracy/Main.lean`](FullDMinusOneHalfAccuracy/Main.lean).  Its proof
+formalizes the manuscript's aggregate-width argument, including spherical
+averaging, finite Haar averages, intrinsic Urysohn, and a proof of
+Brunn--Minkowski in every positive Euclidean dimension from the
+one-dimensional Borell--Brascamp--Lieb transport argument.  The standalone
+unconditional geometric endpoints are collected in
+[`FullDMinusOneHalfAccuracy/UrysohnMain.lean`](FullDMinusOneHalfAccuracy/UrysohnMain.lean).
 
-`SucceedsWithin` models exactly $T$ queries. The standard reduction from at
-most $T$ queries uses padding and is not separately formalized.
+The following additional wrappers are checked in Lean:
 
-## Why up to $d^{-3}$ accuracy?
+- [`FullDMinusOneHalfAccuracy/StoppingStrategy.lean`](FullDMinusOneHalfAccuracy/StoppingStrategy.lean)
+  proves exact padding for transcript-dependent strategies which may stop
+  after at most `T` queries.
+- [`FullDMinusOneHalfAccuracy/QueryBudget.lean`](FullDMinusOneHalfAccuracy/QueryBudget.lean)
+  defines `floor(m² / (100 log(e m)))`; [`FullDMinusOneHalfAccuracy/Main.lean`](FullDMinusOneHalfAccuracy/Main.lean)
+  rules out success at that budget and proves that the first horizon outside
+  the ruled-out range is greater than
+  `d² / (800 log(d+1))` for `d = 2m`.
+- [`FullDMinusOneHalfAccuracy/OddMain.lean`](FullDMinusOneHalfAccuracy/OddMain.lean)
+  projects an arbitrary strategy in dimension `2m+1` to the even block and
+  lifts the hard objective, preserving a strict `10⁻⁷ / √(2m+1)` gap.  It
+  also rules out every exact horizon through the floored core budget and
+  proves the odd-dimensional rate
+  `d² / (1800 log(d+1)) < paperQueryBudget m + 1`.
+- [`FullDMinusOneHalfAccuracy/ScaledMain.lean`](FullDMinusOneHalfAccuracy/ScaledMain.lean)
+  transports the fixed-horizon result to a ball of radius `R` and
+  `L`-Lipschitz objectives, with gap `(L R)ε_m`, and proves monotonicity for
+  smaller target errors.
+- [`FullDMinusOneHalfAccuracy/PaperStopping.lean`](FullDMinusOneHalfAccuracy/PaperStopping.lean)
+  supplies transcript-dependent at-most-query models and padding theorems for
+  both the odd ambient space and the scaled radius-`R` space.  It rules out
+  the floored budget in odd dimension and, in the scaled even model, for every
+  target error at most `(L R)ε_m`.
 
-The main result of the paper is the $\Omega(d^2)$ lower bound, and the overall proof structure for using $d^{-3}$ versus the manuscripts $d^{-1/2}$ accuracy are quite similar. The proofs share the hard family, exact resisting oracle, and normalized-volume
-potential. The manuscript then uses Urysohn's mean-width inequality and
-spherical averaging across many rows. The necessary convex-body, mean-width,
-and rotationally invariant measure infrastructure is not available as a
-ready-to-use result in Lean libraries, so formalizing that step would be a
-substantially larger project project. For this verfication we thus use a simpler one-row sensitivity argument, which requires the order $d^{-3}$ accuracy to achieve our main near-quadratic lower-bound. 
-Formal verification of the sharper $d^{-1/2}$ result is planned as future work, and will be added to this repository when completed.
+These are composable declarations.  Even and odd dimensions both have
+explicit floor/rate and at-most-query theorems, and the scaled even model has
+fixed- and at-most-horizon theorems.  The repository does not claim a single
+odd-dimensional theorem carrying the radius/Lipschitz scaling parameters at
+once.
 
+## Preserved `d⁻³` theorem
+
+The original endpoint remains unchanged.  For `m ≥ 1000`, `d = 2m`, and
+`1000 T ≤ m²`, it defeats every exact-`T` deterministic strategy with strict
+error greater than
+
+$$
+\frac{1}{200{,}000{,}000\,m^3}
+=\frac{1}{25{,}000{,}000\,d^3}.
+$$
+
+Its public declarations remain
+`ZeroOrderBounds.fixedHorizonLowerBound_strict`,
+`ZeroOrderBounds.fixedHorizonLowerBound`, and
+`ZeroOrderBounds.not_succeedsWithin_advertised` in
+[`ZeroOrderBounds/Main.lean`](ZeroOrderBounds/Main.lean).
+
+This top-level proof is retained as a smaller independent verification target:
+its one-row sensitivity argument needs substantially less convex-geometric
+machinery than the full `d⁻¹ᐟ²` proof.
+
+Both developments allow arbitrary dependence on the complete exact-real
+transcript; they impose no continuity, finite-precision, linear-span, time, or
+memory restriction on the strategy.
 
 ## Repository layout
 
 - [`zero_order_LB_tex/value_oracle_restructured_submission/`](zero_order_LB_tex/value_oracle_restructured_submission/)
-  contains the manuscript and bibliography.
-- [`ZeroOrderBounds/`](ZeroOrderBounds/) contains the Lean proof modules,
-  separated into the hard family, projection and barycentric geometry,
-  intrinsic volume and affine sections, oracle state and iteration, volume
-  potential, sensitivity, indistinguishability, and final assembly.
-- [`ZeroOrderBounds.lean`](ZeroOrderBounds.lean) is the library root. A normal
-  `lake build` reaches the complete proof chain and the repeated-query sanity
-  theorem.
-- [`Challenge.lean`](Challenge.lean) is the reviewed statement-only Comparator
-  fixture, while [`Solution.lean`](Solution.lean) repeats that statement and
-  delegates to the public theorem. The challenge imports the
-  final-proof-independent public vocabulary boundary in
-  [`ZeroOrderBounds/Statement.lean`](ZeroOrderBounds/Statement.lean).
-- [`formalization.yaml`](formalization.yaml) records source provenance, exact
-  scope, axioms, statement alignment, and the divergence from the manuscript's
-  stronger headline theorem.
-- [`comparator/fixed_horizon_lower_bound.json`](comparator/fixed_horizon_lower_bound.json)
-  configures statement and axiom verification; [`VERIFICATION.md`](VERIFICATION.md)
-  documents the local checks and sandboxed CI gate.
-- [`LEAN_PROOF_MAP.md`](LEAN_PROOF_MAP.md) gives the reviewer-facing proof map,
-  module-by-module theorem cross-references, model audit, scope boundaries,
-  and verification record.
-- [`LEAN_FORMALIZATION_INSTRUCTIONS.md`](LEAN_FORMALIZATION_INSTRUCTIONS.md)
-  and
-  [`Lean-Zero-Order-Project-README.md`](Lean-Zero-Order-Project-README.md)
-  record the formalization specification and proof architecture.
-- [`lakefile.toml`](lakefile.toml), [`lake-manifest.json`](lake-manifest.json),
-  and [`lean-toolchain`](lean-toolchain) pin the build environment.
+  contains the manuscript source and bibliography.  The sharper proof is in
+  [`value_oracle_accuracy.tex`](zero_order_LB_tex/value_oracle_restructured_submission/value_oracle_accuracy.tex).
+- [`ZeroOrderBounds/`](ZeroOrderBounds/) and [`ZeroOrderBounds.lean`](ZeroOrderBounds.lean)
+  contain the original `d⁻³` proof.
+- [`FullDMinusOneHalfAccuracy/`](FullDMinusOneHalfAccuracy/) and
+  [`FullDMinusOneHalfAccuracy.lean`](FullDMinusOneHalfAccuracy.lean) contain
+  the fully verified `d⁻¹ᐟ²` proof, its convex geometry, oracle endgame, and
+  public wrappers.  The implementation map and scope ledger are in
+  [`FullDMinusOneHalfAccuracy/PLAN.md`](FullDMinusOneHalfAccuracy/PLAN.md).
+- [`Challenge-d-3-accuracy.lean`](Challenge-d-3-accuracy.lean),
+  [`Solution.lean`](Solution.lean), and
+  [`comparator/fixed_horizon_lower_bound.json`](comparator/fixed_horizon_lower_bound.json)
+  audit the simpler `d⁻³` endpoint.
+- [`FullDMinusOneHalfAccuracy/Challenge-full-d-1-2-accuracy.lean`](FullDMinusOneHalfAccuracy/Challenge-full-d-1-2-accuracy.lean),
+  [`FullDMinusOneHalfAccuracy/Solution.lean`](FullDMinusOneHalfAccuracy/Solution.lean),
+  [`FullDMinusOneHalfAccuracy/Audit.lean`](FullDMinusOneHalfAccuracy/Audit.lean), and
+  [`FullDMinusOneHalfAccuracy/comparator/d_sqrt_lower_bound.json`](FullDMinusOneHalfAccuracy/comparator/d_sqrt_lower_bound.json)
+  audit the full `d⁻¹ᐟ²` endpoint.
+- [`formalization.yaml`](formalization.yaml) records source alignment and the
+  exact verified scope; [`VERIFICATION.md`](VERIFICATION.md) records the
+  reproducible checks.
 
-## Building and checking the proof
+## Build and verification
 
-Install [Elan](https://lean-lang.org/install/) if Lean is not already
-available, then run from the repository root:
+Install [Elan](https://lean-lang.org/install/), then run from the repository
+root:
 
 ```bash
 lake exe cache get
-lake build
+lake build ZeroOrderBounds
+lake build FullDMinusOneHalfAccuracy
+lake build 'Challenge-d-3-accuracy' Solution
+lake build 'FullDMinusOneHalfAccuracy.«Challenge-full-d-1-2-accuracy»' \
+  FullDMinusOneHalfAccuracy.Solution
 ```
 
-The cache only supplies compatible mathlib artifacts; project declarations are
-still checked. For a fresh build, use:
-
-```bash
-lake clean
-lake build
-```
-
-For a targeted strict check:
+The cache supplies compatible mathlib artifacts; all project declarations are
+still elaborated and kernel-checked.  The load-bearing trust-zero checks are:
 
 ```bash
 lake env lean --trust=0 ZeroOrderBounds/Main.lean
+lake env lean --trust=0 ZeroOrderBounds/Audit.lean
+lake env lean --trust=0 FullDMinusOneHalfAccuracy/BrunnMinkowskiInduction.lean
+lake env lean --trust=0 FullDMinusOneHalfAccuracy/Main.lean
+lake env lean --trust=0 FullDMinusOneHalfAccuracy/OddMain.lean
+lake env lean --trust=0 FullDMinusOneHalfAccuracy/ScaledMain.lean
+lake env lean --trust=0 FullDMinusOneHalfAccuracy/PaperStopping.lean
+lake env lean --trust=0 FullDMinusOneHalfAccuracy/Audit.lean
 ```
 
-For the exact axiom audit and Comparator wrappers:
+With the pinned Comparator executable available locally, run both statement
+and axiom comparisons:
 
 ```bash
-lake build Challenge Solution
-lake env lean --trust=0 ZeroOrderBounds/Audit.lean
+lake env comparator comparator/fixed_horizon_lower_bound.json
+lake env comparator FullDMinusOneHalfAccuracy/comparator/d_sqrt_lower_bound.json
 ```
 
-The `Comparator` GitHub Actions workflow independently compares the trusted
-challenge statement with the solution wrapper, enforces the axiom allowlist,
-and replays the solution through Lean's kernel in a pinned sandboxed
-environment. The compared proposition explicitly includes normalization,
-convexity, and global one-Lipschitzness of the returned objective. See
-[`VERIFICATION.md`](VERIFICATION.md) for its trust boundary and the
+The [`Comparator` workflow](.github/workflows/comparator.yml) performs the
+same comparisons and kernel replay in a pinned sandboxed environment.  See
+[`VERIFICATION.md`](VERIFICATION.md) for the trust boundary and the exact
 production-source scan.
 
-## Verification status and trusted base
-
-Verified on 2026-07-14 with Lean `v4.32.0` and mathlib `v4.32.0`; exact
-revisions are in [`lake-manifest.json`](lake-manifest.json). A clean build
-completed 3,491 jobs, and all 19 project modules elaborated with `--trust=0`.
-The source contains no `sorry`, `admit`, project-specific axioms, or
-unsafe/opaque proof escape hatches. Remaining build warnings are stylistic.
-
-The final `#print axioms` checks in `ZeroOrderBounds/Main.lean` report only:
+The improved production endpoint's guarded audit permits only:
 
 ```text
 [propext, Classical.choice, Quot.sound]
 ```
 
-These are standard Lean/classical dependencies. See the
-[Lean proof map](LEAN_PROOF_MAP.md) for the complete audit.
+These are standard Lean/classical dependencies.  Neither development uses a
+project-specific axiom or a production `sorry`/`admit`.
 
-The statement comparison does not broaden the formalized claim: the current
-Lean endpoint remains the even-dimensional, fixed-horizon `d^-3` result. It
-does not certify the manuscript's stronger `d^-1/2` theorem; this distinction
-is machine-readable in [`formalization.yaml`](formalization.yaml).
+## Scope boundary
+
+The paper's deterministic `d⁻¹ᐟ²` lower-bound result and its load-bearing
+geometry are fully formalized.  The repository does **not** formalize the
+Protasov upper bound, the resulting two-sided `widetildeTheta(d²)` claim, the
+polynomial-accuracy upper corollary, or the mixed-integer transfer.
 
 ## References
 

@@ -1,7 +1,7 @@
 import ZeroOrderBounds.Statement
 
 /-!
-# Trusted Comparator challenge for the fixed-horizon lower bound
+# Trusted Comparator challenge for the `d⁻³` fixed-horizon lower bound
 
 The proof placeholder is intentional.  Comparator compares this reviewed
 statement with `Solution.fixedHorizonLowerBound_strict` and audits only the

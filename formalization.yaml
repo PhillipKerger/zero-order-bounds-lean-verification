@@ -22,18 +22,24 @@ sources:
 
 status:
   scope: >-
-    Lean 4 and Mathlib formalization of an even-dimensional fixed-horizon
-    lower bound for deterministic exact-value convex optimization. For m at
-    least 1000 and 1000*T at most m^2, the public theorem defeats every
-    deterministic strategy on an admissible convex one-Lipschitz max-linear
-    objective with strict error greater than
-    1/(200000000*m^3). The proof formalizes the hard family, projection
-    geometry, exact resisting oracle, intrinsic-volume potential, one-row
-    sensitivity argument, and final indistinguishability step. The manuscript's
-    stronger d^-1/2 accuracy theorem, odd-dimensional embedding,
-    variable-stopping-time wrapper, full-class wrapper, upper bound, and
-    mixed-integer corollary are not separate Lean endpoints. Sorry counts
-    exclude the statement-only Comparator challenge fixture.
+    Lean 4 and Mathlib formalization of two deterministic exact-value convex
+    optimization lower bounds. The preserved endpoint proves, for d=2m,
+    m at least 1000, and 1000*T at most m^2, a strict error greater than
+    1/(200000000*m^3). The improved endpoint proves, for positive m and
+    T at most m^2/(100*log(e*m)), a strict error greater than
+    10^-7/sqrt(2m). It formalizes the manuscript's aggregate-width argument,
+    including spherical averaging, Brunn--Minkowski, intrinsic Urysohn, and
+    the exact resisting oracle. Additional checked declarations cover
+    transcript-dependent stopping by padding, the floored query budget and
+    an explicit d^2/(800*log(d+1)) even-dimensional rate, projection/lifting
+    to dimension 2m+1 with an explicit rate constant 1800, and radius/Lipschitz
+    scaling with smaller-error monotonicity. Dedicated ambient and radius
+    stopping models give at-most-query forms for the odd and scaled results.
+    These wrappers are separate declarations rather than one combined
+    odd-plus-scaled theorem. The
+    Protasov upper bound, two-sided result, and mixed-integer transfer are not
+    formalized. Sorry counts exclude both statement-only Comparator challenge
+    fixtures.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms:
@@ -49,6 +55,55 @@ status:
         - "Classical.choice"
         - "Quot.sound"
       comparator_config: "comparator/fixed_horizon_lower_bound.json"
+      literature_dependencies: []
+    - declaration: "ZeroOrderBounds.AccuracyImprovement.fixedHorizonSqrtLowerBound_strict"
+      file: "FullDMinusOneHalfAccuracy/Main.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Classical.choice"
+        - "Quot.sound"
+      comparator_config: "FullDMinusOneHalfAccuracy/comparator/d_sqrt_lower_bound.json"
+      literature_dependencies: []
+    - declaration: "ZeroOrderBounds.AccuracyImprovement.not_atMostPaperQueryBudgetSucceedsWithinSqrt_and_rate"
+      file: "FullDMinusOneHalfAccuracy/Main.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Classical.choice"
+        - "Quot.sound"
+      literature_dependencies: []
+    - declaration: "ZeroOrderBounds.AccuracyImprovement.not_ambientPaperQueryBudgetSucceedsWithin_oddSqrtAccuracy_and_rate"
+      file: "FullDMinusOneHalfAccuracy/OddMain.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Classical.choice"
+        - "Quot.sound"
+      literature_dependencies: []
+    - declaration: "ZeroOrderBounds.AccuracyImprovement.scaledFixedHorizonLowerBound_strict_of_le_sqrtAccuracy"
+      file: "FullDMinusOneHalfAccuracy/ScaledMain.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Classical.choice"
+        - "Quot.sound"
+      literature_dependencies: []
+    - declaration: "ZeroOrderBounds.AccuracyImprovement.not_ambientAtMostPaperQueryBudgetSucceedsWithin_oddSqrtAccuracy_and_rate"
+      file: "FullDMinusOneHalfAccuracy/PaperStopping.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Classical.choice"
+        - "Quot.sound"
+      literature_dependencies: []
+    - declaration: "ZeroOrderBounds.AccuracyImprovement.not_radiusAtMostPaperQueryBudgetSucceedsWithinSqrt_and_rate"
+      file: "FullDMinusOneHalfAccuracy/PaperStopping.lean"
+      sorry_count: 0
+      axioms:
+        - "propext"
+        - "Classical.choice"
+        - "Quot.sound"
       literature_dependencies: []
 
 automation:
@@ -72,20 +127,17 @@ automation:
 
 fidelity:
   divergences: >-
-    The Lean endpoint does not formalize the manuscript's headline theorem.
-    The manuscript proves an Omega(d^2/log(d+1)) lower bound at accuracy of
-    order d^-1/2 in all sufficiently large dimensions, using aggregate width
-    across many rows. The Lean proof instead uses one surviving row and proves
-    a stronger quadratic horizon bound at the substantially smaller accuracy
-    1/(25000000*d^3), only for even d=2m with d at least 2000. A lower bound at
-    d^-3 accuracy does not imply the manuscript's d^-1/2 lower bound.
+    The manuscript's deterministic lower-bound argument and d^-1/2 accuracy
+    are formalized, with explicit constants. The narrow Comparator statement
+    is the even-dimensional exact-horizon hard-family theorem. At-most-query,
+    floor/rate, odd-dimensional, and radius/Lipschitz results are exposed as
+    additional declarations, including odd and scaled at-most-query models;
+    no single declaration combines odd ambient dimension with radius/Lipschitz
+    scaling. The original d^-3 theorem remains as a separate endpoint.
 
-    The public Lean theorem is fixed-horizon and uses exactly T transcript
-    entries. Padding a strategy that stops within T rounds, embedding odd
-    dimensions, and lifting the admissible hard family to the full convex
-    one-Lipschitz class are mathematical corollaries described in the
-    documentation but are not packaged as public Lean declarations. The
-    manuscript's Protasov upper bound, aggregate-width argument, and
+    The manuscript's headline theorem is two-sided. Its Protasov upper bound,
+    the resulting widetildeTheta(d^2) conclusion, the polynomial-accuracy upper
+    corollary, the common-optimum and radial-box reductions, and the
     mixed-integer transfer are not formalized.
 
 review:
@@ -93,22 +145,35 @@ review:
   reviewers:
     - "Phillip Kerger"
     - "GitHub Copilot (statement and metadata audit, 2026-07-16)"
+    - "OpenAI Codex (improved-endpoint implementation and audit, 2026-07-16)"
   notes: >-
     Repository verification records a successful kernel build, an empty
     production-source scan for proof shortcuts, and final-theorem dependencies
-    only on propext, Classical.choice, and Quot.sound. The Comparator fixture
-    checks that the reviewed challenge statement is exactly the statement
-    proved by the solution wrapper. These checks are not independent external
-    mathematical peer review.
+    only on propext, Classical.choice, and Quot.sound. The two Comparator
+    fixtures check that each reviewed challenge statement is exactly the
+    statement proved by its solution wrapper. These checks are not independent
+    external mathematical peer review.
 
 alignment:
   namespace: "ZeroOrderBounds"
   statements:
-    - source: "Manuscript Theorem 1 (Deterministic lower bound)"
-      status: "not-formalized"
+    - source: "Manuscript deterministic lower bound (Theorem thm:lower)"
+      lean: "ZeroOrderBounds.AccuracyImprovement.fixedHorizonSqrtLowerBound_strict; ZeroOrderBounds.AccuracyImprovement.not_atMostPaperQueryBudgetSucceedsWithinSqrt_and_rate; ZeroOrderBounds.AccuracyImprovement.not_ambientAtMostPaperQueryBudgetSucceedsWithin_oddSqrtAccuracy_and_rate"
+      module: "FullDMinusOneHalfAccuracy.Main; FullDMinusOneHalfAccuracy.PaperStopping"
+      status: "proved-as-components"
       note: >-
-        The d^-1/2 accuracy and Omega(d^2/log(d+1)) statement is outside the
-        current Lean scope.
+        The even and odd endpoints use accuracy constant 10^-7. The even
+        first-unruled-out horizon exceeds d^2/(800*log(d+1)); the odd analogue
+        uses 1800. Exact-horizon and at-most wrappers are separated for audit.
+
+    - source: "Manuscript scaling lemma for radius R and Lipschitz constant L"
+      lean: "ZeroOrderBounds.AccuracyImprovement.scaledFixedHorizonLowerBound_strict_of_le_sqrtAccuracy; ZeroOrderBounds.AccuracyImprovement.not_radiusAtMostPaperQueryBudgetSucceedsWithinSqrt_and_rate"
+      module: "FullDMinusOneHalfAccuracy.ScaledMain; FullDMinusOneHalfAccuracy.PaperStopping"
+      status: "proved"
+      note: >-
+        Includes exact query/answer transport, class and minimizer
+        certificates, LR gap scaling, monotonicity to smaller errors, and a
+        transcript-dependent at-most-budget form in the even block model.
 
     - source: "Repository fixed-horizon d^-3 lower-bound specification"
       lean: "ZeroOrderBounds.fixedHorizonLowerBound_strict"
@@ -129,6 +194,15 @@ alignment:
       lean: "ZeroOrderBounds.oracleRun_final_budgets"
       module: "ZeroOrderBounds.OracleRun"
       status: "proved-as-components"
+
+    - source: "Brunn--Minkowski and intrinsic Urysohn steps in the manuscript lower bound"
+      lean: "ZeroOrderBounds.AccuracyImprovement.brunnMinkowskiAt_euclidean; ZeroOrderBounds.AccuracyImprovement.two_mul_intrinsicVolumeRadius_le_intrinsicMeanWidth_unconditional"
+      module: "FullDMinusOneHalfAccuracy.BrunnMinkowskiInduction; FullDMinusOneHalfAccuracy.UrysohnMain"
+      status: "proved-as-components"
+
+    - source: "Manuscript headline upper bound and two-sided conclusion"
+      status: "not-formalized"
+      note: "The Protasov upper bound and its corollaries are outside the Lean scope."
 
     - source: "Manuscript Corollary 1 (Mixed-integer consequence)"
       status: "not-formalized"

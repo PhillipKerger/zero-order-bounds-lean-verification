@@ -1,5 +1,5 @@
 {
-  "challenge_module": "Challenge",
+  "challenge_module": "«Challenge-d-3-accuracy»",
   "solution_module": "Solution",
   "theorem_names": ["fixedHorizonLowerBound_strict"],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],

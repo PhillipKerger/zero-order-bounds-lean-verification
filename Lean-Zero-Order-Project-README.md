@@ -1,4 +1,12 @@
-# Lean companion for the deterministic exact-value lower bound
+# Historical project note for the preserved `d⁻³` formalization
+
+> [!NOTE]
+> This document records the original `d⁻³`-only project design and is retained
+> as documentation for [`ZeroOrderBounds/`](ZeroOrderBounds/).  Its statements
+> below about repository-wide Lean scope are historical: the separate
+> [`FullDMinusOneHalfAccuracy/`](FullDMinusOneHalfAccuracy/) development now
+> fully verifies the paper's deterministic `d⁻¹ᐟ²` lower-bound result.  See
+> the current [`README.md`](README.md) for the two-track repository overview.
 
 This repository is the Lean 4 companion to the manuscript
 [*Closing the Oracle-Complexity Gap in Derivative-Free Optimization: A Near-Quadratic Lower Bound from Exact Function Values*](zero_order_LB_tex/value_oracle_restructured_submission/value_oracle_accuracy.tex).

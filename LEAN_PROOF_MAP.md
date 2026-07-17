@@ -1,4 +1,12 @@
-# Lean Proof Map of this Repository
+# Lean proof map for the preserved `d⁻³` track
+
+> [!NOTE]
+> This is the proof map for the original, simpler `d⁻³` development in
+> [`ZeroOrderBounds/`](ZeroOrderBounds/).  It predates the separate
+> [`FullDMinusOneHalfAccuracy/`](FullDMinusOneHalfAccuracy/) formalization,
+> which now fully verifies the paper's deterministic `d⁻¹ᐟ²` lower bound.
+> See the current [`README.md`](README.md) and that folder's
+> [`PLAN.md`](FullDMinusOneHalfAccuracy/PLAN.md) for repository-wide scope.
 
 ## 1. What is verified
 
